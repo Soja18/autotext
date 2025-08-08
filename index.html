@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Auto Text Effect — Typewriter</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --accent:#7c3aed;
+    --muted:#94a3b8;
+    --glass: rgba(255,255,255,0.03);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg,#071026 0%, #0f1724 100%);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:#e6eef8;
+  }
+  .wrap{
+    width:940px;
+    max-width:95%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px;
+    padding:24px;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.7);
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:18px;
+    align-items:start;
+  }
+
+  /* Left - preview */
+  .preview{
+    padding:30px;
+    background:var(--card);
+    border-radius:10px;
+    min-height:220px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    gap:12px;
+  }
+  .label{font-size:13px;color:var(--muted); margin-bottom:6px}
+  .title{
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:0.2px;
+    margin:0;
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .effect-line{
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .text-display{
+    margin-top:6px;
+    font-size:36px;
+    font-weight:700;
+    line-height:1.05;
+    min-height:56px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color: white;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* special text styles - toggled via class */
+  .txt-gradient {
+    background: linear-gradient(90deg, #7c3aed, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .txt-shadow { text-shadow: 0 6px 24px rgba(0,0,0,0.6); }
+  .txt-scale { transform-origin: left center; transition: transform 220ms ease; }
+  .txt-scale.grow { transform: scale(1.04); }
+
+  /* cursor */
+  .cursor {
+    width:2px;
+    height:44px;
+    background:var(--accent);
+    display:inline-block;
+    vertical-align:middle;
+    animation: blink 1s steps(2, start) infinite;
+    border-radius:1px;
+  }
+  .cursor.hidden { display:none; animation:none; }
+  @keyframes blink { 50% { opacity:0 } }
+
+  /* Right - controls */
+  .controls{
+    padding:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-radius:10px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-width:260px;
+  }
+  .controls h3{margin:0 0 6px 0;font-size:15px}
+  .row{display:flex;gap:8px;align-items:center}
+  .col{display:flex;flex-direction:column;gap:6px}
+  input[type="text"], textarea, select {
+    width:100%;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.06);
+    background:var(--glass);
+    color:inherit;
+    outline:none;
+    font-size:13px;
+  }
+  textarea{min-height:90px; resize:vertical}
+  label{font-size:13px;color:var(--muted)}
+  .btn{
+    padding:8px 12px;
+    border-radius:8px;
+    background:var(--accent);
+    border:none;
+    color:#fff;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .small{font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
+  .flex-between{display:flex;justify-content:space-between;align-items:center}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* footer info */
+  .info{font-size:13px;color:var(--muted);margin-top:8px}
+
+  /* responsive */
+  @media (max-width:880px){
+    .wrap{grid-template-columns:1fr; padding:14px}
+    .controls{order:2}
+    .preview{order:1}
+    .text-display{font-size:26px}
+    .cursor{height:32px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Preview / Display -->
+    <div class="preview">
+      <div class="label">Preview</div>
+      <div class="title">Auto Text Effect <span class="muted" style="font-weight:600;font-size:13px">— Typewriter & effects</span></div>
+
+      <div class="effect-line">
+        <div class="text-display" id="display">
+          <span id="text-part"></span><span id="cursor" class="cursor"></span>
+        </div>
+      </div>
+
+      <div class="info">Tip: Use *bold* markup with <code>text</code> for italic and <code>*text*</code> for strong in messages; <span style="color:#ffd700">:heart:</span> becomes a heart.</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <h3>Phrases</h3>
+      <label class="muted">Enter phrases (one per line)</label>
+      <textarea id="phrases" placeholder="I love you\nYou are my sunshine\nMeet me at sunset"></textarea>
+
+      <div class="row">
+        <div class="col" style="flex:1">
+          <label class="muted">Typing speed (ms per char)</label>
+          <input type="range" id="typeSpeed" min="20" max="200" value="60">
+          <div class="muted flex-between"><span id="typeSpeedVal">60</span> <span class="muted">Lower = faster</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col" style="flex:1">
+          <label class="muted">Backspace speed (ms per char)</label>
+          <input type="range" id="backSpeed" min="10" max="180" value="40">
+          <div class="muted flex-between"><span id="backSpeedVal">40</span> <span class="muted">Lower = faster</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col" style="flex:1">
+          <label class="muted">Pause after complete (ms)</label>
+          <input type="number" id="pauseAfter" value="1400" min="200" step="100">
+        </div>
+        <div style="width:12px"></div>
+        <div class="col" style="flex:1">
+          <label class="muted">Pause before start (ms)</label>
+          <input type="number" id="pauseBefore" value="300" min="0" step="50">
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="width:50%">
+          <label class="muted">Loop</label>
+          <select id="loopMode">
+            <option value="true">On (repeat forever)</option>
+            <option value="false">Off (stop at last phrase)</option>
+          </select>
+        </div>
+        <div style="width:50%">
+          <label class="muted">Show Cursor</label>
+          <select id="showCursor">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="width:50%">
+          <label class="muted">Text style</label>
+          <select id="textStyle">
+            <option value="normal">Normal</option>
+            <option value="gradient">Gradient</option>
+            <option value="shadow">Shadow</option>
+            <option value="scale">Scale (slight scale)</option>
+            <option value="all">All effects</option>
+          </select>
+        </div>
+        <div style="width:50%">
+          <label class="muted">Auto start</label>
+          <select id="autoStart">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button class="btn" id="applyBtn">Apply</button>
+        <button class="small" id="startBtn">Start</button>
+        <button class="small" id="pauseBtn">Pause</button>
+        <button class="small" id="nextBtn">Next</button>
+        <button class="small" id="prevBtn">Prev</button>
+        <button class="small" id="copyBtn">Copy Current</button>
+      </div>
+
+      <div style="margin-top:8px" class="muted">You can also insert <code>:heart:</code> or use <code>italic</code> and <code>*bold*</code> markup in phrases.</div>
+    </div>
+  </div>
+
+<script>
+/*
+  Auto Text Effect
+  - Reads phrases from textarea (one per line)
+  - Types them char-by-char
+  - Pauses, then backspaces, then next phrase
+  - Supports markup: italic and *bold* (very simple)
+  - :heart: -> ❤
+*/
+
+const elText = document.getElementById('text-part');
+const elCursor = document.getElementById('cursor');
+const phrasesInput = document.getElementById('phrases');
+const typeSpeedEl = document.getElementById('typeSpeed');
+const backSpeedEl = document.getElementById('backSpeed');
+const typeSpeedVal = document.getElementById('typeSpeedVal');
+const backSpeedVal = document.getElementById('backSpeedVal');
+const pauseAfterEl = document.getElementById('pauseAfter');
+const pauseBeforeEl = document.getElementById('pauseBefore');
+const loopModeEl = document.getElementById('loopMode');
+const showCursorEl = document.getElementById('showCursor');
+const textStyleEl = document.getElementById('textStyle');
+const autoStartEl = document.getElementById('autoStart');
+
+const applyBtn = document.getElementById('applyBtn');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn = document.getElementById('prevBtn');
+const copyBtn = document.getElementById('copyBtn');
+
+let phrases = [
+  "nothing is impossible, the word itself says 'i'm possible'! "
+];
+
+// initialize controls
+phrasesInput.value = phrases.join('\\n');
+typeSpeedVal.innerText = typeSpeedEl.value;
+backSpeedVal.innerText = backSpeedEl.value;
+
+// state
+let idx = 0;              // phrase index
+let pos = 0;              // char index in current phrase (visual chars)
+let typing = false;
+let paused = false;
+let direction = 'forward'; // 'forward' typing, 'back' deleting
+let timer = null;
+
+// helper: escape HTML (we'll use minimal formatting, but keep safe)
+function escapeHTML(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// convert markup to HTML (simple)
+// *bold* -> <strong>, italic -> <em>, :heart: -> ❤
+// We'll keep the source phrase as plain text; rendering will replace markup
+function formatText(raw){
+  // escape first
+  let s = escapeHTML(raw);
+  // :heart:
+  s = s.replace(/:heart:/g, '❤');
+  // strong () - replace longest-first to avoid nested issues
+  s = s.replace(/\\\\(.?)\\\\*/g, '<strong>$1</strong>');
+  // italic (*)
+  s = s.replace(/\\(.?)\\*/g, '<em>$1</em>');
+  return s;
+}
+
+// Because we type character-by-character but the string may include HTML tags after formatting,
+// we need to derive a display sequence of "text tokens" (characters + small HTML wrappers).
+// Approach: build array of tokens where each token is either a literal char or an HTML tag.
+// Then we can reveal tokens one-by-one.
+function tokenizeFormattedHTML(html){
+  // tokenize tags as single tokens and characters as single tokens
+  const tokens = [];
+  let i = 0;
+  while(i < html.length){
+    if(html[i] === '<'){
+      // read full tag
+      let j = i;
+      while(j < html.length && html[j] !== '>') j++;
+      tokens.push(html.slice(i, j+1));
+      i = j+1;
+    } else {
+      tokens.push(html[i]);
+      i++;
+    }
+  }
+  return tokens;
+}
+
+// build token lists for all phrases (preprocessed)
+let tokenLists = [];
+
+// prepare phrase token lists based on current phrases input
+function preparePhrases(){
+  phrases = phrasesInput.value.split('\\n').map(s => s.trim()).filter(s => s.length>0);
+  if(phrases.length === 0) phrases = ['Hello world'];
+  tokenLists = phrases.map(p => {
+    const html = formatText(p);
+    return tokenizeFormattedHTML(html);
+  });
+  // reset indices safely
+  idx = 0; pos = 0; direction = 'forward';
+}
+
+// apply text style classes based on select
+function applyTextStyle(){
+  const disp = document.getElementById('text-part');
+  disp.classList.remove('txt-gradient','txt-shadow','txt-scale');
+  const mode = textStyleEl.value;
+  if(mode === 'gradient') disp.classList.add('txt-gradient');
+  else if(mode === 'shadow') disp.classList.add('txt-shadow');
+  else if(mode === 'scale') disp.classList.add('txt-scale');
+  else if(mode === 'all') disp.classList.add('txt-gradient','txt-shadow','txt-scale','grow');
+  // show/hide cursor
+  elCursor.classList.toggle('hidden', showCursorEl.value === 'false');
+}
+
+// render visible tokens upto pos
+function renderTokens(list, upto){
+  // join tokens[0..upto-1] and set innerHTML
+  const html = list.slice(0, upto).join('');
+  elText.innerHTML = html;
+}
+
+// main tick function
+function tick(){
+  if(paused) return;
+  if(!tokenLists.length) return;
+  const current = tokenLists[idx];
+  // typing forward
+  if(direction === 'forward'){
+    if(pos < current.length){
+      // reveal one token
+      renderTokens(current, pos+1);
+      pos++;
+      // schedule next
+      timer = setTimeout(tick, Number(typeSpeedEl.value));
+    } else {
+      // phrase complete - pause then go to back
+      timer = setTimeout(()=>{
+        direction = 'back';
+        tick();
+      }, Number(pauseAfterEl.value));
+    }
+  } else { // backspace
+    if(pos > 0){
+      // hide last token
+      pos--;
+      renderTokens(current, pos);
+      timer = setTimeout(tick, Number(backSpeedEl.value));
+    } else {
+      // finished deleting current, move to next
+      timer = setTimeout(()=>{
+        idx = (idx + 1);
+        if(idx >= tokenLists.length){
+          if(loopModeEl.value === 'true'){
+            idx = 0;
+          } else {
+            // stop at last (do nothing further)
+            typing = false;
+            return;
+          }
+        }
+        direction = 'forward';
+        timer = setTimeout(tick, Number(pauseBeforeEl.value));
+      }, 120);
+    }
+  }
+}
+
+// control functions
+function startTyping(){
+  if(typing) return;
+  typing = true;
+  paused = false;
+  clearTimeout(timer);
+  tick();
+}
+function pauseTyping(){
+  paused = true;
+  clearTimeout(timer);
+  typing = false;
+}
+function stopTyping(){
+  paused = true;
+  typing = false;
+  clearTimeout(timer);
+  idx = 0; pos = 0;
+  if(tokenLists.length) renderTokens(tokenLists[0], 0);
+}
+
+// next / prev actions: skip quickly to next phrase (deletes current and moves on)
+function nextPhrase(){
+  clearTimeout(timer);
+  idx = (idx + 1) % tokenLists.length;
+  pos = 0; direction = 'forward';
+  renderTokens(tokenLists[idx], 0);
+  if(!typing && autoStartEl.value === 'true') startTyping();
+}
+function prevPhrase(){
+  clearTimeout(timer);
+  idx = (idx - 1 + tokenLists.length) % tokenLists.length;
+  pos = 0; direction = 'forward';
+  renderTokens(tokenLists[idx], 0);
+  if(!typing && autoStartEl.value === 'true') startTyping();
+}
+
+applyBtn.addEventListener('click', ()=>{
+  preparePhrases();
+  applyTextStyle();
+  if(autoStartEl.value === 'true'){
+    stopTyping();
+    setTimeout(()=>startTyping(), 200);
+  } else {
+    // show first phrase (blank)
+    idx = 0; pos = 0;
+    renderTokens(tokenLists[idx], 0);
+  }
+});
+
+typeSpeedEl.addEventListener('input', ()=> typeSpeedVal.innerText = typeSpeedEl.value);
+backSpeedEl.addEventListener('input', ()=> backSpeedVal.innerText = backSpeedEl.value);
+
+startBtn.addEventListener('click', ()=> { paused = false; startTyping(); });
+pauseBtn.addEventListener('click', ()=> { pauseTyping(); });
+nextBtn.addEventListener('click', ()=> { nextPhrase(); });
+prevBtn.addEventListener('click', ()=> { prevPhrase(); });
+copyBtn.addEventListener('click', ()=>{
+  // copy currently visible text (plain)
+  const plain = elText.innerText;
+  navigator.clipboard?.writeText(plain).then(()=> alert('Copied current text!'), ()=> alert('Copy failed'));
+});
+
+// initial preparation
+preparePhrases();
+applyTextStyle();
+renderTokens(tokenLists[0], 0);
+
+// Auto start optionally
+if(autoStartEl.value === 'true') {
+  setTimeout(()=> startTyping(), 300);
+}
+
+// Pause on hover for preview area
+document.querySelector('.preview').addEventListener('mouseenter', ()=> { paused = true; });
+document.querySelector('.preview').addEventListener('mouseleave', ()=> { if(typing) paused = false; });
+
+// small accessibility: space toggles start/pause
+document.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){
+    e.preventDefault();
+    if(typing) pauseTyping(); else startTyping();
+  }
+});
+
+</script>
+</body>
+</html>
